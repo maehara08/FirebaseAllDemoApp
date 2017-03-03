@@ -6,13 +6,38 @@
     android:layout_height="match_parent"
     tools:context="com.cs.land.riku_maehara.firebasealldemoapp.LoginActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.gms.common.SignInButton
+            android:id="@+id/google_sign_in_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_medium" />
+
+        <Button
+            android:id="@+id/facebookButton"
+            android:layout_width="fill_parent"
+            android:layout_height="56dp"
+            android:layout_above="@+id/twitterButton"
+            android:text="@string/facebook"
+            android:theme="@style/FacebookButtonStyle"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="258dp"
+            app:layout_constraintHorizontal_bias="0.0" />
+
+        <Button
+            android:id="@+id/twitterButton"
+            android:layout_width="fill_parent"
+            android:layout_height="56dp"
+            android:text="@string/twitter"
+            android:theme="@style/TwitterButtonStyle"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@+id/googlePlusButton"
+            app:layout_constraintHorizontal_bias="0.0"
+            android:layout_marginBottom="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/facebookButton" />
 
 </android.support.constraint.ConstraintLayout>

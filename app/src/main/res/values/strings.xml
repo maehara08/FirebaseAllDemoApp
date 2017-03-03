@@ -6,4 +6,9 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+
+    <!--google login-->
+    <string name="googlePlus">Google</string>
+    <string name="facebook">Facebook</string>
+    <string name="twitter">Twitter</string>
 </resources>

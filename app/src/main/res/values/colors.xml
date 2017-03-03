@@ -3,4 +3,11 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <!-- login theme -->
+    <color name="primary_material_dark">#008ee3</color>
+    <color name="primary_text_default_material_dark">#ffffff</color>
+    <color name="primary_dark_material_dark">#096ba7</color>
+    <color name="white">#ffffff</color>
+    <color name="sushiColor">#FF008EE3</color>
+    <color name="sushiItaColor">#FFE3841F</color>
 </resources>
