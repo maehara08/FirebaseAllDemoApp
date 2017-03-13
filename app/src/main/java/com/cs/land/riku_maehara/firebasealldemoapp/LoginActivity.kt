@@ -11,36 +11,44 @@ import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInResult
+import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import timber.log.Timber
 import kotlin.properties.Delegates
 
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener, FirebaseAuth.AuthStateListener {
+
+
     companion object {
-        const val TAG = "LoginActivity";
+        const val TAG = "LoginActivity"
         const val REQUEST_CODE_GOOGLE_SIGN_IN = 100
 
     }
 
     var googleApiClient: GoogleApiClient by Delegates.notNull()
+    var firebaseAuth: FirebaseAuth by Delegates.notNull()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        Timber.d(getString(R.string.default_web_client_id))
+        firebaseAuth = FirebaseAuth.getInstance()
         //setup google
         val googleSignOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.google_web_client_id))
+                .requestIdToken(resources.getString(R.string.default_web_client_id))
+                .requestEmail()
                 .build()
+
         googleApiClient = GoogleApiClient.Builder(this)
-                .enableAutoManage(this, GoogleApiClient.OnConnectionFailedListener {
-                    Toast.makeText(this, "Google認証に失敗しました", Toast.LENGTH_SHORT).show()
-                }).addApi(Auth.GOOGLE_SIGN_IN_API, googleSignOptions)
+                .enableAutoManage(this, this)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, googleSignOptions)
                 .build()
         val signInGoogleButton: SignInButton = bindView(R.id.google_sign_in_button)
         signInGoogleButton.apply {
@@ -55,12 +63,22 @@ class LoginActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        when (resultCode) {
+        when (requestCode) {
             REQUEST_CODE_GOOGLE_SIGN_IN -> {
                 val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
-
+                handleSignInWithGoogleResult(result)
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        firebaseAuth.addAuthStateListener(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        firebaseAuth.removeAuthStateListener(this)
     }
 
     private fun signInWithGoogle() {
@@ -75,18 +93,29 @@ class LoginActivity : AppCompatActivity() {
             firebaseAuthWithGoogle(account!!)
         } else {
             // failed sign in
-            Toast.makeText(this ,"failed",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "failed " + CommonStatusCodes.getStatusCodeString(result.status.statusCode), Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun firebaseAuthWithGoogle(account: GoogleSignInAccount) {
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
         FirebaseAuth.getInstance().signInWithCredential(credential)
-                .addOnCompleteListener(this/*Activity*/, OnCompleteListener {
-                    Toast.makeText(this,"complete!",Toast.LENGTH_SHORT).show()
+                .addOnCompleteListener(this, OnCompleteListener {
+                    Toast.makeText(this, "complete!", Toast.LENGTH_SHORT).show()
                 })
     }
 
+    override fun onConnectionFailed(p0: ConnectionResult) {
+        Toast.makeText(this, "Google認証に失敗しました" + p0.errorMessage, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onAuthStateChanged(p0: FirebaseAuth) {
+        Timber.d("onAuthStatusChanged")
+        val firebaseUser = firebaseAuth.currentUser;
+        firebaseUser?.let {
+            Timber.d("onAuthStatusChanged2")
+        }
+    }
 }
 
 fun <T : View> Activity.bindView(@IdRes id: Int): T = findViewById(id) as T

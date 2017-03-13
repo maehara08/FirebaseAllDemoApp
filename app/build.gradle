@@ -10,6 +10,10 @@ android {
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
+
+
+        multiDexEnabled true
+
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
@@ -33,8 +37,8 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-        develop {
-            signingConfigs.develop
+        debug {
+            signingConfig signingConfigs.develop
         }
     }
 }
@@ -54,6 +58,10 @@ dependencies {
     //auth
     compile 'com.google.firebase:firebase-auth:10.0.1'
     compile 'com.google.android.gms:play-services-auth:10.0.1'
+    // MultiDex
+    compile 'com.android.support:multidex:1.0.1'
+    //Timber
+    compile 'com.jakewharton.timber:timber:4.5.1'
 
 }
 repositories {
