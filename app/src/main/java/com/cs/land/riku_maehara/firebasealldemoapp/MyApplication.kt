@@ -1,7 +1,10 @@
 package com.cs.land.riku_maehara.firebasealldemoapp
 
-import android.app.Application
 import android.support.multidex.MultiDexApplication
+import com.facebook.FacebookSdk
+import com.twitter.sdk.android.Twitter
+import com.twitter.sdk.android.core.TwitterAuthConfig
+import io.fabric.sdk.android.Fabric
 import timber.log.Timber
 
 /**
@@ -14,5 +17,9 @@ public class MyApplication : MultiDexApplication() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
+        FacebookSdk.sdkInitialize(applicationContext)
+        //twitter
+        val authConfig = TwitterAuthConfig(LoginActivity.TWITTER_KEY, LoginActivity.TWITTER_SECRET)
+        Fabric.with(this, Twitter(authConfig))
     }
 }

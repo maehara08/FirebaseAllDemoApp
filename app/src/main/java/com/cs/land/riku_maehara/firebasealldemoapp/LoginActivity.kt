@@ -6,7 +6,14 @@ import android.os.Bundle
 import android.support.annotation.IdRes
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import android.widget.Button
 import android.widget.Toast
+import com.facebook.AccessToken
+import com.facebook.CallbackManager
+import com.facebook.FacebookCallback
+import com.facebook.FacebookException
+import com.facebook.login.LoginResult
+import com.facebook.login.widget.LoginButton
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -15,9 +22,15 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.TwitterAuthProvider
+import com.twitter.sdk.android.core.Callback
+import com.twitter.sdk.android.core.Result
+import com.twitter.sdk.android.core.TwitterException
+import com.twitter.sdk.android.core.TwitterSession
+import com.twitter.sdk.android.core.identity.TwitterLoginButton
 import timber.log.Timber
 import kotlin.properties.Delegates
 
@@ -28,18 +41,23 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
     companion object {
         const val TAG = "LoginActivity"
         const val REQUEST_CODE_GOOGLE_SIGN_IN = 100
-
+        // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
+        const val TWITTER_KEY = "ha1nN9rncDWHzDjjzyhnN6C0G"
+        const val TWITTER_SECRET = "LuMosIvn8DMUDQav5lvHgaC0zwrXjvOHmgmDbvTJDkzrqOtq2O"
     }
 
     var googleApiClient: GoogleApiClient by Delegates.notNull()
     var firebaseAuth: FirebaseAuth by Delegates.notNull()
+    var callbackManager: CallbackManager by Delegates.notNull()
+    var twitterLoginButton: TwitterLoginButton by Delegates.notNull()
+    var emailButton: Button by Delegates.notNull()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        Timber.d(getString(R.string.default_web_client_id))
         firebaseAuth = FirebaseAuth.getInstance()
+
         //setup google
         val googleSignOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(resources.getString(R.string.default_web_client_id))
@@ -58,6 +76,55 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
             }
         }
 
+        //facebook
+        callbackManager = CallbackManager.Factory.create()
+        val facebookLoginCallback = object : FacebookCallback<LoginResult> {
+            override fun onError(error: FacebookException?) {
+                error?.message?.let {
+                    this@LoginActivity.showToast(it)
+                }
+            }
+
+            override fun onSuccess(result: LoginResult?) {
+                result?.let {
+                    firebaseAuthWithFacebook(it.accessToken)
+                }
+            }
+
+            override fun onCancel() {
+            }
+        }
+        (findViewById(R.id.facebook_login_button) as LoginButton).apply {
+            setReadPermissions("email", "public_profile")
+            registerCallback(callbackManager, facebookLoginCallback)
+        }
+
+        //Twitter
+        val twitterLoginCallback = object : Callback<TwitterSession>() {
+            override fun success(result: Result<TwitterSession>?) {
+                result?.data?.let {
+                    firebaseAuthWithTwitter(it)
+                }
+
+            }
+
+            override fun failure(exception: TwitterException?) {
+                exception?.message?.let {
+                    this@LoginActivity.showToast(it)
+                }
+            }
+        }
+        twitterLoginButton = bindView(R.id.twitter_login_button)
+        twitterLoginButton.apply {
+            callback = twitterLoginCallback
+        }
+
+        //email
+        emailButton = bindView(R.id.email_button)
+        emailButton.setOnClickListener {
+            val intent =  Intent(this, FormActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -67,6 +134,10 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
             REQUEST_CODE_GOOGLE_SIGN_IN -> {
                 val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
                 handleSignInWithGoogleResult(result)
+            }
+            else -> {
+                callbackManager.onActivityResult(requestCode, resultCode, data)
+                twitterLoginButton.onActivityResult(requestCode, resultCode, data)
             }
         }
     }
@@ -93,20 +164,36 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
             firebaseAuthWithGoogle(account!!)
         } else {
             // failed sign in
-            Toast.makeText(this, "failed " + CommonStatusCodes.getStatusCodeString(result.status.statusCode), Toast.LENGTH_SHORT).show()
+            showToast("failed " + CommonStatusCodes.getStatusCodeString(result.status.statusCode))
         }
     }
 
     private fun firebaseAuthWithGoogle(account: GoogleSignInAccount) {
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
         FirebaseAuth.getInstance().signInWithCredential(credential)
-                .addOnCompleteListener(this, OnCompleteListener {
-                    Toast.makeText(this, "complete!", Toast.LENGTH_SHORT).show()
-                })
+                .addOnCompleteListener {
+                    showToast("Complete!")
+                }
+    }
+
+    private fun firebaseAuthWithFacebook(token: AccessToken) {
+        val credential = FacebookAuthProvider.getCredential(token.token)
+        firebaseAuth.signInWithCredential(credential)
+                .addOnCompleteListener {
+                    showToast("Complete!")
+                }
+    }
+
+    private fun firebaseAuthWithTwitter(session: TwitterSession) {
+        val credential = TwitterAuthProvider.getCredential(session.authToken.token, session.authToken.secret)
+        firebaseAuth.signInWithCredential(credential)
+                .addOnCompleteListener {
+                    showToast("Complete!")
+                }
     }
 
     override fun onConnectionFailed(p0: ConnectionResult) {
-        Toast.makeText(this, "Google認証に失敗しました" + p0.errorMessage, Toast.LENGTH_SHORT).show()
+        showToast("Google認証に失敗しました")
     }
 
     override fun onAuthStateChanged(p0: FirebaseAuth) {
@@ -119,3 +206,4 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
 }
 
 fun <T : View> Activity.bindView(@IdRes id: Int): T = findViewById(id) as T
+fun Activity.showToast(message: String) = Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()

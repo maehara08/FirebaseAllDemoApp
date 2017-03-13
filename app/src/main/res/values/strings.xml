@@ -11,4 +11,7 @@
     <string name="googlePlus">Google</string>
     <string name="facebook">Facebook</string>
     <string name="twitter">Twitter</string>
+
+    <!--facebook-->
+    <string name="facebook_app_id">1734492196862908</string>
 </resources>
