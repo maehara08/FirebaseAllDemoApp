@@ -44,6 +44,8 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
         // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
         const val TWITTER_KEY = "ha1nN9rncDWHzDjjzyhnN6C0G"
         const val TWITTER_SECRET = "LuMosIvn8DMUDQav5lvHgaC0zwrXjvOHmgmDbvTJDkzrqOtq2O"
+        const val REQUEST_CODE_EMAIL_SIGN_IN = 101
+
     }
 
     var googleApiClient: GoogleApiClient by Delegates.notNull()
@@ -123,7 +125,7 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
         emailButton = bindView(R.id.email_button)
         emailButton.setOnClickListener {
             val intent =  Intent(this, FormActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent, REQUEST_CODE_EMAIL_SIGN_IN)
         }
     }
 
