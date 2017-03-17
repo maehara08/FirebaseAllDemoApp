@@ -61,6 +61,8 @@ dependencies {
     compile 'com.google.android.gms:play-services-auth:10.0.1'
     // facebook
     compile 'com.facebook.android:facebook-android-sdk:[4,5)'
+    //realtime db
+    compile 'com.google.firebase:firebase-database:10.0.1'
     //twitter
     compile('com.twitter.sdk.android:twitter:2.3.2@aar') {
         transitive = true;

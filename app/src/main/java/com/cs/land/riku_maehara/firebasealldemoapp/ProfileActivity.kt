@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
+import android.widget.Button
 import android.widget.TextView
 import com.google.firebase.auth.*
 import kotlin.properties.Delegates
@@ -49,10 +50,23 @@ class ProfileActivity : AppCompatActivity() {
         val userUidTextView: TextView = bindView(R.id.user_uid_text_view)
         val userEmailTextView: TextView = bindView(R.id.user_email_text_view)
         val userProviderTextView: TextView = bindView(R.id.user_provider_text_view)
+        val startChatButton: Button = bindView(R.id.start_chat_button)
+        val signOutButton: Button = bindView(R.id.sign_out_button)
 
         userUidTextView.text = userId
         userEmailTextView.text = if (TextUtils.isEmpty(userEmail)) getString(R.string.user_profile_unknown) else userEmail
-
         userProviderTextView.text = userProvider
+
+        startChatButton.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+        signOutButton.setOnClickListener {
+            val intent =Intent(this, LoginActivity::class.java)
+            firebaseAuth.signOut()
+            startActivity(intent)
+            finish()
+        }
     }
 }

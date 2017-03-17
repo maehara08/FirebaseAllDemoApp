@@ -8,4 +8,16 @@
     tools:context="com.cs.land.riku_maehara.firebasealldemoapp.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
+    <EditText
+        android:id="@+id/message_edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:ems="10"
+        android:inputType="textMultiLine"
+        android:hint="message"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginStart="8dp" />
 </android.support.constraint.ConstraintLayout>

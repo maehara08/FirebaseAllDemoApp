@@ -220,7 +220,6 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
             startActivityForResult(ProfileActivity.createIntent(this, userInfoBundle), REQUEST_CODE_PROFILE)
             finish()
         }
-
     }
 
     override fun onComplete(task: Task<AuthResult>) {

@@ -33,8 +33,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/margin_medium"
-        android:text="start chat button"
+        android:text="start chat"
         android:textSize="10sp" />
-
+    <Button
+        android:id="@+id/sign_out_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/margin_medium"
+        android:text="sign out"
+        android:textSize="10sp" />
 
 </LinearLayout>
