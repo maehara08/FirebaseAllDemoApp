@@ -40,8 +40,8 @@ public class FormActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(v: View?) {
         if (!TextUtils.isEmpty(emailEditText.text) && !TextUtils.isEmpty(passwordEditText.text)) {
             val intent = Intent().apply {
-                putExtra(KEY_EMAIL, emailEditText.text)
-                putExtra(KEY_PASSWORD, emailEditText.text)
+                putExtra(KEY_EMAIL, emailEditText.text.toString())
+                putExtra(KEY_PASSWORD, passwordEditText.text.toString())
                 if (v!!.id == R.id.sign_up_button) {
                     putExtra(KEY_HAS_ACCOUNT, false)
                 } else {
@@ -51,7 +51,7 @@ public class FormActivity : AppCompatActivity(), View.OnClickListener {
             setResult(RESULT_OK, intent)
             finish()
         } else {
-            showToast("plz input")
+            showToast(this, "plz input")
         }
     }
 }

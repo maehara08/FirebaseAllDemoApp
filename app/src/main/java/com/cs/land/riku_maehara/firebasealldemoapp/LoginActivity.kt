@@ -1,13 +1,9 @@
 package com.cs.land.riku_maehara.firebasealldemoapp
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.support.annotation.IdRes
 import android.support.v7.app.AppCompatActivity
-import android.view.View
 import android.widget.Button
-import android.widget.Toast
 import com.facebook.AccessToken
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
@@ -22,10 +18,9 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.GoogleApiClient
-import com.google.firebase.auth.FacebookAuthProvider
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.TwitterAuthProvider
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.*
 import com.twitter.sdk.android.core.Callback
 import com.twitter.sdk.android.core.Result
 import com.twitter.sdk.android.core.TwitterException
@@ -35,16 +30,14 @@ import timber.log.Timber
 import kotlin.properties.Delegates
 
 
-class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener, FirebaseAuth.AuthStateListener {
-
+class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener, FirebaseAuth.AuthStateListener, OnCompleteListener<AuthResult> {
 
     companion object {
         const val TAG = "LoginActivity"
         const val REQUEST_CODE_GOOGLE_SIGN_IN = 100
         // Note: Your consumer key and secret should be obfuscated in your source code before shipping.
-        const val TWITTER_KEY = "ha1nN9rncDWHzDjjzyhnN6C0G"
-        const val TWITTER_SECRET = "LuMosIvn8DMUDQav5lvHgaC0zwrXjvOHmgmDbvTJDkzrqOtq2O"
         const val REQUEST_CODE_EMAIL_SIGN_IN = 101
+        const val REQUEST_CODE_PROFILE = 102
 
     }
 
@@ -83,7 +76,7 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
         val facebookLoginCallback = object : FacebookCallback<LoginResult> {
             override fun onError(error: FacebookException?) {
                 error?.message?.let {
-                    this@LoginActivity.showToast(it)
+                    this@LoginActivity.showToast(this@LoginActivity, it)
                 }
             }
 
@@ -112,7 +105,7 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
 
             override fun failure(exception: TwitterException?) {
                 exception?.message?.let {
-                    this@LoginActivity.showToast(it)
+                    this@LoginActivity.showToast(this@LoginActivity, it)
                 }
             }
         }
@@ -124,7 +117,7 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
         //email
         emailButton = bindView(R.id.email_button)
         emailButton.setOnClickListener {
-            val intent =  Intent(this, FormActivity::class.java)
+            val intent = Intent(this, FormActivity::class.java)
             startActivityForResult(intent, REQUEST_CODE_EMAIL_SIGN_IN)
         }
     }
@@ -136,6 +129,11 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
             REQUEST_CODE_GOOGLE_SIGN_IN -> {
                 val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
                 handleSignInWithGoogleResult(result)
+            }
+            REQUEST_CODE_EMAIL_SIGN_IN -> {
+                data?.let {
+                    firebaseAuthWithEmailAndPassword(it)
+                }
             }
             else -> {
                 callbackManager.onActivityResult(requestCode, resultCode, data)
@@ -166,46 +164,71 @@ class LoginActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLis
             firebaseAuthWithGoogle(account!!)
         } else {
             // failed sign in
-            showToast("failed " + CommonStatusCodes.getStatusCodeString(result.status.statusCode))
+            showToast(this, "failed " + CommonStatusCodes.getStatusCodeString(result.status.statusCode))
         }
     }
 
     private fun firebaseAuthWithGoogle(account: GoogleSignInAccount) {
         val credential = GoogleAuthProvider.getCredential(account.idToken, null)
         FirebaseAuth.getInstance().signInWithCredential(credential)
-                .addOnCompleteListener {
-                    showToast("Complete!")
-                }
+                .addOnCompleteListener(this)
     }
 
     private fun firebaseAuthWithFacebook(token: AccessToken) {
         val credential = FacebookAuthProvider.getCredential(token.token)
         firebaseAuth.signInWithCredential(credential)
-                .addOnCompleteListener {
-                    showToast("Complete!")
-                }
+                .addOnCompleteListener(this)
     }
 
     private fun firebaseAuthWithTwitter(session: TwitterSession) {
         val credential = TwitterAuthProvider.getCredential(session.authToken.token, session.authToken.secret)
         firebaseAuth.signInWithCredential(credential)
-                .addOnCompleteListener {
-                    showToast("Complete!")
-                }
+                .addOnCompleteListener(this)
+    }
+
+    private fun firebaseAuthWithEmailAndPassword(data: Intent) {
+        if (data.getBooleanExtra(FormActivity.KEY_HAS_ACCOUNT, true)) {
+            firebaseAuth.signInWithEmailAndPassword(data.getStringExtra(FormActivity.KEY_EMAIL),
+                    data.getStringExtra(FormActivity.KEY_PASSWORD))
+                    .addOnCompleteListener(this)
+        } else {
+            Timber.d(data.getStringExtra(FormActivity.KEY_PASSWORD))
+            firebaseAuth.createUserWithEmailAndPassword(data.getStringExtra(FormActivity.KEY_EMAIL),
+                    data.getStringExtra(FormActivity.KEY_PASSWORD))
+                    .addOnCompleteListener(this)
+        }
     }
 
     override fun onConnectionFailed(p0: ConnectionResult) {
-        showToast("Google認証に失敗しました")
+        showToast(this, "Google認証に失敗しました")
     }
 
-    override fun onAuthStateChanged(p0: FirebaseAuth) {
-        Timber.d("onAuthStatusChanged")
-        val firebaseUser = firebaseAuth.currentUser;
-        firebaseUser?.let {
-            Timber.d("onAuthStatusChanged2")
+    override fun onAuthStateChanged(firebaseAuth: FirebaseAuth) {
+        val user = firebaseAuth.currentUser
+        user?.let {
+            val userInfoBundle = Bundle()
+            userInfoBundle.apply {
+                putString(ProfileActivity.KEY_USER_UID, it.uid)
+                putString(ProfileActivity.KEY_USER_EMAIL, it.email)
+                Timber.d(it.providers?.get(0) ?: "null!")
+                if (it.providers?.isEmpty() ?: true) {
+                    putString(ProfileActivity.KEY_USER_PROVIDER, getString(R.string.user_profile_unknown))
+                } else {
+                    putString(ProfileActivity.KEY_USER_PROVIDER, it.providers!!.get(0))
+                }
+            }
+            startActivityForResult(ProfileActivity.createIntent(this, userInfoBundle), REQUEST_CODE_PROFILE)
+            finish()
+        }
+
+    }
+
+    override fun onComplete(task: Task<AuthResult>) {
+        if (!task.isSuccessful) {
+            showToast(this, task.exception?.message ?: "null")
+            Timber.e(task.exception)
+        } else {
+            showToast(this, "Complete!")
         }
     }
 }
-
-fun <T : View> Activity.bindView(@IdRes id: Int): T = findViewById(id) as T
-fun Activity.showToast(message: String) = Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).show()

@@ -19,7 +19,7 @@ public class MyApplication : MultiDexApplication() {
         }
         FacebookSdk.sdkInitialize(applicationContext)
         //twitter
-        val authConfig = TwitterAuthConfig(LoginActivity.TWITTER_KEY, LoginActivity.TWITTER_SECRET)
+        val authConfig = TwitterAuthConfig(getString(R.string.TWITTER_KEY),getString(R.string.TWITTER_SECRET))
         Fabric.with(this, Twitter(authConfig))
     }
 }
