@@ -28,18 +28,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         mFirebaseAuth = FirebaseAuth.getInstance()
         mFirebaseDB = FirebaseDatabase.getInstance()
-        mRef = mFirebaseDB.getReference("message")
-        mRef.addValueEventListener(this)
+
         val toolbar = findViewById(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
 
         val fab = findViewById(R.id.fab) as FloatingActionButton
         fab.setOnClickListener(this)
-
-        messageEditText = bindView(R.id.message_edit_text)
-        mUserId = mFirebaseAuth.currentUser!!.uid
 
         val drawer = findViewById(R.id.drawer_layout) as DrawerLayout
         val toggle = ActionBarDrawerToggle(
@@ -49,6 +46,23 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         val navigationView = findViewById(R.id.nav_view) as NavigationView
         navigationView.setNavigationItemSelectedListener(this)
+
+        messageEditText = bindView(R.id.message_edit_text)
+
+        mUserId = mFirebaseAuth.currentUser!!.uid
+        mRef = mFirebaseDB.getReference("message")
+        mRef.addValueEventListener(this)
+        mRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onCancelled(databaseError: DatabaseError?) {
+                Timber.e(databaseError?.message)
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot?) {
+                getMessagesFromDataSnapshot(dataSnapshot!!).map {
+                    Timber.d(it.message)
+                }
+            }
+        })
     }
 
     override fun onBackPressed() {
@@ -108,13 +122,34 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     override fun onDataChange(dataSnapshot: DataSnapshot?) {
-        val message = dataSnapshot?.getValue(Message::class.java)?.message ?: "null(-_-)"
-        Timber.d("Value is ${message}")
+        if (dataSnapshot!!.childrenCount.toInt() == 0) return
+        getMessagesFromDataSnapshot(dataSnapshot).map {
+            Timber.d(it.message)
+        }
     }
 
     override fun onClick(v: View?) {
         val message = Message(messageEditText.text.toString(), mUserId, System.currentTimeMillis())
-        mRef.push().setValue(message)
+        writeNewMessage(message)
         messageEditText.setText("")
+    }
+
+    private fun writeNewMessage(message: Message) {
+        val key = mFirebaseDB.reference.child("message").push().key
+        val messageValues = message.toMap()
+
+        val childUpdates = HashMap<String, Any>()
+        childUpdates.put("/posts/" + key, messageValues)
+        childUpdates.put("/user-posts/" + message.name + "/" + key, messageValues)
+        mRef.updateChildren(childUpdates)
+    }
+
+    private fun getMessagesFromDataSnapshot(dataSnapshot: DataSnapshot): ArrayList<Message> {
+        val oldMessages = ArrayList<Message>()
+
+        dataSnapshot.child("posts").children.mapTo(oldMessages) {
+            it.getValue(Message::class.java)
+        }
+        return oldMessages
     }
 }
