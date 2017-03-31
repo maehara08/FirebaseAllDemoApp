@@ -9,3 +9,4 @@
 debug.jks
 libs/
 app/google-services.json
+app/src/main/res/values/strings.xml

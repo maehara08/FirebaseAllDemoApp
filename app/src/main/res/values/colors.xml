@@ -10,4 +10,10 @@
     <color name="white">#ffffff</color>
     <color name="sushiColor">#FF008EE3</color>
     <color name="sushiItaColor">#FFE3841F</color>
+    <!-- chat item -->
+    <color name="gray_333">#333333</color>
+    <color name="gray_666">#666666</color>
+    <color name="gray_999">#999999</color>
+    <color name="chat_list_item_text_color">@color/gray_333</color>
+    <color name="chat_list_item_timestamp_color">@android:color/black</color>
 </resources>

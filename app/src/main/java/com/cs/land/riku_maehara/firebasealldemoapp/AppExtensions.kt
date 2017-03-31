@@ -10,5 +10,6 @@ import android.widget.Toast
  */
 
 fun <T : View> Activity.bindView(@IdRes id: Int): T = findViewById(id) as T
+fun <T : View> View.bindView(@IdRes id: Int): T = findViewById(id) as T
 
 fun Activity.showToast(context: Activity, message: String) = Toast.makeText(context, message, Toast.LENGTH_SHORT).show()

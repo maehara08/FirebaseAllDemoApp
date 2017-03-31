@@ -71,6 +71,10 @@ dependencies {
     compile 'com.android.support:multidex:1.0.1'
     //Timber
     compile 'com.jakewharton.timber:timber:4.5.1'
+    //recyclerView
+    compile 'jp.satorufujiwara:recyclerview-binder:1.3.2'
+    //rerative time text view
+    compile 'com.github.curioustechizen.android-ago:library:1.3.2'
 
 }
 repositories {
